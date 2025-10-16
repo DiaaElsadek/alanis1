@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "http://elanis.runasp.net/api",
+    baseURL: "https://elanis.runasp.net/api",
     headers: {
         "Content-Type": "application/json",
     },
@@ -37,7 +37,7 @@ api.interceptors.response.use(
             try {
                 // Call للـ refresh-token
                 const res = await axios.post(
-                    "http://elanis.runasp.net/api/Account/refresh-token",
+                    "https://elanis.runasp.net/api/Account/refresh-token",
                     JSON.stringify(refreshToken),
                     { headers: { "Content-Type": "application/json" } }
                 );
