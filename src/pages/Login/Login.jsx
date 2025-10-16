@@ -7,22 +7,34 @@ import "./Login.css";
 import { GoogleLogin } from "@react-oauth/google";
 import api from "../api";
 
-// تسجيل عادي
+// تسجيل عادي بدون الاعتماد على interceptor
 const loginUser = async (credentials) => {
     console.log("Sending login data:", credentials); // للتصحيح
-    
-    const response = await api.post("/api/Account/login", credentials, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
 
+    // الحصول على التوكن من localStorage أو sessionStorage
+    const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+
+    // تجهيز الهيدر بشكل يدوي
+    const headers = {
+        // Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+    };
+
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    // إرسال الريكوست
+    const response = await api.post("http://elanis.runasp.net/api/Account/login", credentials, { headers });
+
+    // معالجة الريسبونس
     if (response.data.succeeded) {
         return response.data.data;
     } else {
         throw new Error(response.data.message || "Login failed");
     }
 };
+
 
 // تسجيل بجوجل
 const loginWithGoogle = async (credentialResponse) => {
@@ -78,7 +90,7 @@ const Login = () => {
     // حفظ التوكينات
     const saveAuthData = (data) => {
         const storage = rememberMe ? localStorage : sessionStorage;
-        
+
         // تنظيف التخزين أولاً
         localStorage.removeItem("authToken");
         localStorage.removeItem("userId");
@@ -88,7 +100,7 @@ const Login = () => {
         sessionStorage.removeItem("userId");
         sessionStorage.removeItem("refreshToken");
         sessionStorage.removeItem("userData");
-        
+
         // حفظ البيانات الجديدة
         if (data.accessToken) {
             storage.setItem("authToken", data.accessToken);
@@ -102,7 +114,7 @@ const Login = () => {
         if (data) {
             storage.setItem("userData", JSON.stringify(data));
         }
-        
+
         // إعداد الهيدر الافتراضي لـ axios
         if (data.accessToken) {
             api.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
@@ -128,7 +140,7 @@ const Login = () => {
     // التحقق من صحة الإدخال
     const validateForm = () => {
         const newErrors = {};
-        
+
         if (!loginInput.trim()) {
             newErrors.loginInput = "Email or phone number is required";
         } else {
@@ -159,7 +171,7 @@ const Login = () => {
     // الكشف التلقائي عن نوع الإدخال
     const detectInputType = (input) => {
         const emailRegex = /\S+@\S+\.\S+/;
-        
+
         if (emailRegex.test(input)) {
             return "email";
         } else {
@@ -169,19 +181,19 @@ const Login = () => {
 
     const handleLoginInputChange = (value) => {
         setLoginInput(value);
-        
+
         // الكشف التلقائي عن نوع الإدخال
         if (value.trim()) {
             const detectedType = detectInputType(value);
             setLoginMethod(detectedType);
         }
-        
+
         // مسح الأخطاء عند الكتابة
         if (errors.loginInput || errors.general) {
-            setErrors(prev => ({ 
-                ...prev, 
+            setErrors(prev => ({
+                ...prev,
                 loginInput: "",
-                general: "" 
+                general: ""
             }));
         }
     };
@@ -191,10 +203,10 @@ const Login = () => {
         if (!validateForm()) return;
 
         // إعداد بيانات التسجيل بناءً على نوع الإدخال
-        const loginData = { 
-            password: password 
+        const loginData = {
+            password: password
         };
-        
+
         if (loginMethod === "email") {
             loginData.email = loginInput.trim();
         } else {
@@ -207,7 +219,7 @@ const Login = () => {
 
     const handleGoogleSuccess = (credentialResponse) => {
         console.log("Google login response:", credentialResponse);
-        
+
         if (credentialResponse.credential) {
             googleLoginMutation.mutate(credentialResponse);
         } else {
@@ -226,7 +238,7 @@ const Login = () => {
             name: "Guest User",
             id: "guest-" + Date.now()
         };
-        
+
         // حفظ بيانات الضيف
         sessionStorage.setItem("userData", JSON.stringify(guestData));
         dispatch(login(guestData));
@@ -270,13 +282,13 @@ const Login = () => {
                                 Use {loginMethod === "email" ? "Phone" : "Email"}
                             </button>
                         </div>
-                        
+
                         <input
                             id="loginInput"
                             type={loginMethod === "email" ? "email" : "tel"}
                             placeholder={
-                                loginMethod === "email" 
-                                    ? "Enter your email address" 
+                                loginMethod === "email"
+                                    ? "Enter your email address"
                                     : "Enter your phone number (e.g., 0512345678)"
                             }
                             value={loginInput}
@@ -287,7 +299,7 @@ const Login = () => {
                         {errors.loginInput && (
                             <span className="input-error">{errors.loginInput}</span>
                         )}
-                        
+
                         {/* تلميح للكشف التلقائي */}
                         <div className="input-hint">
                             {loginInput && (
@@ -323,7 +335,7 @@ const Login = () => {
                         {errors.password && (
                             <span className="input-error">{errors.password}</span>
                         )}
-                        
+
                         <div className="password-options">
                             <Link to="/forgot-password" className="forgot-password-link">
                                 Forgot Password?
@@ -350,9 +362,8 @@ const Login = () => {
                     {/* Login Button */}
                     <button
                         type="submit"
-                        className={`custom-login-button ${
-                            loginMutation.isPending ? "loading" : ""
-                        }`}
+                        className={`custom-login-button ${loginMutation.isPending ? "loading" : ""
+                            }`}
                         disabled={loginMutation.isPending || googleLoginMutation.isPending}
                     >
                         {loginMutation.isPending ? (
@@ -367,8 +378,8 @@ const Login = () => {
                 </form>
 
                 {/* Guest Login */}
-                <button 
-                    className="guest-login-button" 
+                <button
+                    className="guest-login-button"
                     onClick={handleGuestLogin}
                     type="button"
                     disabled={loginMutation.isPending || googleLoginMutation.isPending}
@@ -383,8 +394,8 @@ const Login = () => {
 
                 {/* Google Login */}
                 <div className="google-login-container">
-                    <GoogleLogin 
-                        onSuccess={handleGoogleSuccess} 
+                    <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
                         onError={handleGoogleError}
                         theme="filled_blue"
                         size="large"
