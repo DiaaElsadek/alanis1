@@ -11,7 +11,7 @@ import api from "../api";
 const loginUser = async (credentials) => {
     console.log("Sending login data:", credentials); // للتصحيح
     
-    const response = await api.post("/Account/login", credentials, {
+    const response = await api.post("/api/Account/login", credentials, {
         headers: {
             'Content-Type': 'application/json'
         }
@@ -26,7 +26,7 @@ const loginUser = async (credentials) => {
 
 // تسجيل بجوجل
 const loginWithGoogle = async (credentialResponse) => {
-    const response = await api.post("/Account/login/google", {
+    const response = await api.post("/api/Account/login/google", {
         token: credentialResponse.credential
     });
 
