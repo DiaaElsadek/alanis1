@@ -1,0 +1,122 @@
+.stats-card {
+  background: var(--bg-dark);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-accent);
+}
+
+.stats-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.stats-icon {
+  font-size: 2rem;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+}
+
+.trend-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.trend-positive {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.trend-negative {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+.trend-neutral {
+  background: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
+}
+
+.stats-content {
+  margin-bottom: 16px;
+}
+
+.stats-value {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: var(--color-text);
+  background: linear-gradient(135deg, var(--color-text), var(--color-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stats-title {
+  margin: 0;
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.stats-progress {
+  height: 4px;
+  background: var(--bg-light);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-secondary));
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* Animation for the progress bar */
+.stats-card:hover .progress-bar {
+  animation: progressAnimation 1.5s ease-in-out;
+}
+
+@keyframes progressAnimation {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0); }
+  100% { width: 100%; }
+}
+
+@media (max-width: 768px) {
+  .stats-card {
+    padding: 16px;
+  }
+  
+  .stats-value {
+    font-size: 1.8rem;
+  }
+  
+  .stats-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+  }
+}

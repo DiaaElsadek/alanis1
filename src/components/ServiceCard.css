@@ -1,0 +1,286 @@
+/* ServiceCard.css */
+
+.service-card {
+  background: var(--card-background);
+  backdrop-filter: blur(20px);
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.service-image {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.service-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: var(--transition);
+}
+
+.service-card:hover .service-image img {
+  transform: scale(1.05);
+}
+
+.service-image::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.3));
+}
+
+.service-content {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.service-content h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.service-provider {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.service-description {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-light);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.service-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.service-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rating-stars {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFD700;
+}
+
+.reviews-count {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.service-category {
+  flex-shrink: 0;
+}
+
+.category-badge {
+  background: var(--gradient-accent);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.service-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.service-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+  background: linear-gradient(135deg, #fff 0%, var(--color-text-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.book-button {
+  background: var(--gradient-accent);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-block;
+  min-width: 100px;
+}
+
+.book-button:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Loading State */
+.service-card.loading {
+  pointer-events: none;
+}
+
+.service-card.loading .service-image,
+.service-card.loading .service-content h4,
+.service-card.loading .service-description {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.service-card.loading .service-image {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Animation for price */
+@keyframes pricePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.service-card:hover .service-price {
+  animation: pricePulse 0.5s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .service-card {
+    margin-bottom: 16px;
+  }
+  
+  .service-image {
+    height: 160px;
+  }
+  
+  .service-content {
+    padding: 16px;
+    gap: 10px;
+  }
+  
+  .service-content h4 {
+    font-size: 16px;
+  }
+  
+  .service-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .book-button {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Special effects for different categories */
+.service-card[data-category="childcare"] .category-badge {
+  background: linear-gradient(135deg, #4CAF50 0%, #81C784 100%);
+}
+
+.service-card[data-category="eldercare"] .category-badge {
+  background: linear-gradient(135deg, #2196F3 0%, #64B5F6 100%);
+}
+
+.service-card[data-category="nursing"] .category-badge {
+  background: linear-gradient(135deg, #F44336 0%, #E57373 100%);
+}
+
+.service-card[data-category="housekeeping"] .category-badge {
+  background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+}
+
+/* Favorite icon (optional enhancement) */
+.service-favorite {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  z-index: 2;
+}
+
+.service-favorite:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+
+.service-favorite.active {
+  background: var(--gradient-accent);
+}
+
+.service-favorite svg {
+  width: 18px;
+  height: 18px;
+  fill: white;
+}
+
+/* Pulse animation for loading */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}

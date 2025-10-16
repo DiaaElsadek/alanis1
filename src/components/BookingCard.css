@@ -1,0 +1,112 @@
+.booking-card {
+  background: var(--bg-dark);
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  
+}
+
+.booking-card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.booking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.booking-title {
+  margin: 0;
+  color: #e1e5e9;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.booking-details {
+  margin-bottom: 16px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.detail-icon {
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.detail-text {
+  color: #495057;
+  font-size: 14px;
+}
+
+.booking-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.booking-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 100px;
+}
+
+.btn-confirm {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-confirm:hover {
+  background-color: #218838;
+}
+
+.btn-complete {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.btn-complete:hover {
+  background-color: #138496;
+}
+
+.btn-cancel {
+  background-color: #dc3545;
+  color: rgb(255, 255, 255);
+}
+
+.btn-cancel:hover {
+  background-color: #c82333;
+}
+
+.btn-details {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-details:hover {
+  background-color: #545b62;
+}

@@ -1,0 +1,236 @@
+:root {
+  /* Primary Colors */
+  --color-primary: #1a2a6c;
+  --color-secondary: #2b5876;
+  --color-tertiary: #4e4376;
+  --color-accent: #4ecdc4;
+  --color-accent-hover: #3bb4ac;
+  
+  /* Neutral Colors */
+  --color-text: #2d3748;
+  --color-text-light: #718096;
+  --color-text-muted: #a0aec0;
+  
+  /* Backgrounds */
+  --bg-dark: rgba(0, 0, 0, 0.2);
+  --bg-light: rgba(255, 255, 255, 0.1);
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  
+  /* Border Radius */
+  --border-radius: 8px;
+  --border-radius-lg: 16px;
+  
+  /* Transitions */
+  --transition: all 0.3s ease;
+}
+
+.message-item {
+  display: flex;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--bg-light);
+  cursor: pointer;
+  transition: var(--transition);
+  background-color: transparent;
+}
+
+.message-item:hover {
+  background-color: var(--bg-light);
+}
+
+.message-item.unread {
+  background-color: rgba(78, 205, 196, 0.1);
+}
+
+.message-item.unread:hover {
+  background-color: rgba(78, 205, 196, 0.15);
+}
+
+.message-item.expanded {
+  background-color: var(--bg-dark);
+}
+
+.message-avatar {
+  position: relative;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.message-avatar img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-accent);
+}
+
+.status-icon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: var(--color-primary);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  border: 2px solid var(--bg-dark);
+}
+
+.status-icon.unread {
+  color: var(--color-accent);
+  background: var(--color-primary);
+}
+
+.status-icon.read {
+  color: var(--color-text-muted);
+  background: var(--color-primary);
+}
+
+.status-icon.archived {
+  font-size: 8px;
+  color: var(--color-text-muted);
+  background: var(--color-primary);
+}
+
+.message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.sender-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.sender-name {
+  font-weight: 600;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.message-time {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.message-subject {
+  font-size: 14px;
+  color: var(--color-accent);
+  font-weight: 500;
+  margin-left: 15px;
+  white-space: nowrap;
+}
+
+.message-preview {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.message-item.expanded .message-preview {
+  white-space: normal;
+  margin-bottom: 15px;
+}
+
+.message-details {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--bg-light);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-body {
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+.message-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.action-btn.reply {
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.action-btn.reply:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.action-btn.archive, .action-btn.delete {
+  background-color: var(--bg-light);
+  color: var(--color-text-muted);
+}
+
+.action-btn.archive:hover, .action-btn.delete:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .message-item {
+    padding: 12px 15px;
+  }
+  
+  .message-avatar img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .message-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .message-subject {
+    margin-left: 0;
+    margin-top: 5px;
+    order: 3;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .message-actions {
+    flex-wrap: wrap;
+  }
+  
+  .action-btn {
+    flex: 1;
+    min-width: 80px;
+  }
+}

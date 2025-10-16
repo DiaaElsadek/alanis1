@@ -1,0 +1,217 @@
+.job-card {
+  background: var(--bg-dark);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.job-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-accent);
+}
+
+.job-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.company-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--border-radius);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 18px;
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.job-title-section {
+  flex: 1;
+}
+
+.job-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.company-name {
+  margin: 0;
+  color: var(--color-accent);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.job-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-icon {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.detail-text {
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+}
+
+.job-type {
+  font-weight: 500;
+}
+
+.job-description {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.job-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.skill-tag {
+  background: rgba(78, 205, 196, 0.2);
+  color: var(--color-accent);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid rgba(78, 205, 196, 0.3);
+}
+
+.skill-tag-more {
+  background: var(--bg-light);
+  color: var(--color-text-muted);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+.job-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.job-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.posted-date {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.applicants-count {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.job-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.apply-btn {
+  background: var(--color-accent);
+  color: var(--color-primary);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.apply-btn:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.save-btn {
+  background: var(--bg-light);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text);
+  padding: 8px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.save-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--color-accent);
+}
+
+.graduate-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .job-card {
+    padding: 16px;
+  }
+  
+  .job-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .job-actions {
+    justify-content: space-between;
+  }
+  
+  .apply-btn {
+    flex: 1;
+  }
+}

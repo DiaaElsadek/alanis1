@@ -1,0 +1,218 @@
+:root {
+  --color-bg: #f8fafc;
+  --color-primary: #3b82f6;
+  --color-secondary: #1e293b;
+  --color-text: #111827;
+  --color-light: #64748b;
+  --color-white: #ffffff;
+  --color-danger: #ef4444;
+
+  --max-width: 1200px;
+  --transition: all 0.3s ease;
+  --radius: 10px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+/* ====== Layout ====== */
+.container {
+  width: 90%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--color-white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  margin: 1rem 0;
+  transition: var(--transition);
+}
+.card:hover {
+  transform: translateY(-3px);
+}
+
+/* ====== Navbar & Footer ====== */
+.navbar, .footer {
+  background: var(--color-primary);
+  color: var(--color-white);
+  padding: 1rem 0;
+}
+
+.navbar a, .footer a {
+  color: var(--color-white);
+  text-decoration: none;
+  margin: 0 1rem;
+  transition: var(--transition);
+}
+.navbar a:hover, .footer a:hover {
+  color: var(--color-secondary);
+}
+
+/* ====== Pages ====== */
+
+/* Home Page */
+.home-hero {
+  text-align: center;
+  padding: 4rem 1rem;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  color: var(--color-white);
+  border-radius: var(--radius);
+}
+.home-hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+.home-hero p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+.home-hero button {
+  background: var(--color-white);
+  color: var(--color-primary);
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: bold;
+  transition: var(--transition);
+}
+.home-hero button:hover {
+  background: var(--color-secondary);
+  color: var(--color-white);
+}
+
+/* Login & Register */
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+.auth-box {
+  width: 100%;
+  max-width: 400px;
+}
+.auth-box h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.auth-box input {
+  width: 100%;
+  padding: 0.8rem;
+  margin: 0.5rem 0;
+  border: 1px solid #ccc;
+  border-radius: var(--radius);
+}
+.auth-box button {
+  width: 100%;
+  padding: 0.8rem;
+  background: var(--color-primary);
+  border: none;
+  color: var(--color-white);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: bold;
+}
+.auth-box button:hover {
+  background: var(--color-secondary);
+}
+
+/* Dashboards */
+.dashboard {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 1rem;
+  min-height: 80vh;
+}
+.sidebar {
+  background: var(--color-secondary);
+  color: var(--color-white);
+  padding: 1rem;
+  border-radius: var(--radius);
+}
+.sidebar a {
+  display: block;
+  color: var(--color-white);
+  margin: 0.8rem 0;
+}
+.dashboard-content {
+  padding: 1rem;
+}
+
+/* Jobs List */
+.jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(280px,1fr));
+  gap: 1.5rem;
+}
+
+/* Job Details */
+.job-details {
+  padding: 2rem;
+}
+
+/* Applications */
+.applications-list li {
+  margin: 0.5rem 0;
+  padding: 0.8rem;
+  background: var(--color-white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Notifications */
+.notification {
+  padding: 1rem;
+  border-left: 5px solid var(--color-primary);
+  margin: 0.5rem 0;
+  background: var(--color-white);
+  border-radius: var(--radius);
+}
+
+/* Messages */
+.messages-box {
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+.message {
+  padding: 0.5rem;
+  margin: 0.3rem 0;
+  border-radius: var(--radius);
+}
+.message.sent {
+  background: var(--color-primary);
+  color: var(--color-white);
+  text-align: right;
+}
+.message.received {
+  background: #e2e8f0;
+  text-align: left;
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 768px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+  .home-hero h1 {
+    font-size: 2rem;
+  }
+  .jobs-grid {
+    grid-template-columns: 1fr;
+  }
+}
