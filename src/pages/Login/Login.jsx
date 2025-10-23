@@ -9,32 +9,28 @@ import api from "../api";
 
 // تسجيل عادي بدون الاعتماد على interceptor
 const loginUser = async (credentials) => {
-    console.log("Sending login data:", credentials); // للتصحيح
+    console.log("Sending login data:", credentials);
 
-    // الحصول على التوكن من localStorage أو sessionStorage
-    const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
-
-    // تجهيز الهيدر بشكل يدوي
     const headers = {
-        // Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+        "accept": "text/plain",
     };
 
-    if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-    }
+    const response = await api.post(
+        "http://elanis.runasp.net/api/Account/login",
+        credentials,
+        { headers }
+    );
 
-    // إرسال الريكوست
-    const response = await api.post("http://elanis.runasp.net/api/Account/login", credentials, { headers });
+    console.log(response);
 
-    // معالجة الريسبونس
+    // لازم توصل للبيانات من response.data
     if (response.data.succeeded) {
         return response.data.data;
     } else {
         throw new Error(response.data.message || "Login failed");
     }
 };
-
 
 // تسجيل بجوجل
 const loginWithGoogle = async (credentialResponse) => {
@@ -52,9 +48,9 @@ const loginWithGoogle = async (credentialResponse) => {
 const Login = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const [loginInput, setLoginInput] = useState("");
+    const [email, setEmail] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
     const [password, setPassword] = useState("");
-    const [loginMethod, setLoginMethod] = useState("email");
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [errors, setErrors] = useState({});
@@ -126,11 +122,11 @@ const Login = () => {
         dispatch(login(data));
 
         // التوجيه بناءً على الدور
-        if (data.roles && data.roles.includes("Admin")) {
+        if (data.role === "Admin") {
             navigate("/AdminDashboard", { replace: true });
-        } else if (data.roles && data.roles.includes("Provider")) {
+        } else if (data.role === "Provider") {
             navigate("/FreelancerDashboard", { replace: true });
-        } else if (data.roles && data.roles.includes("User")) {
+        } else if (data.role === "User") {
             navigate("/ClientDashboard", { replace: true });
         } else {
             navigate("/home", { replace: true });
@@ -141,23 +137,28 @@ const Login = () => {
     const validateForm = () => {
         const newErrors = {};
 
-        if (!loginInput.trim()) {
-            newErrors.loginInput = "Email or phone number is required";
+        // التحقق من البريد الإلكتروني
+        if (!email.trim()) {
+            newErrors.email = "Email is required";
         } else {
-            if (loginMethod === "email") {
-                const emailRegex = /\S+@\S+\.\S+/;
-                if (!emailRegex.test(loginInput)) {
-                    newErrors.loginInput = "Please enter a valid email address";
-                }
-            } else {
-                // تبسيط تحقق رقم الهاتف
-                const phoneRegex = /^[0-9+\-\s()]{10,}$/;
-                if (!phoneRegex.test(loginInput.replace(/\s/g, ''))) {
-                    newErrors.loginInput = "Please enter a valid phone number";
-                }
+            const emailRegex = /\S+@\S+\.\S+/;
+            if (!emailRegex.test(email)) {
+                newErrors.email = "Please enter a valid email address";
             }
         }
 
+        // التحقق من رقم الهاتف
+        if (!phoneNumber.trim()) {
+            newErrors.phoneNumber = "Phone number is required";
+        } else {
+            // تبسيط تحقق رقم الهاتف
+            const phoneRegex = /^[0-9+\-\s()]{10,}$/;
+            if (!phoneRegex.test(phoneNumber.replace(/\s/g, ''))) {
+                newErrors.phoneNumber = "Please enter a valid phone number";
+            }
+        }
+
+        // التحقق من كلمة المرور
         if (!password) {
             newErrors.password = "Password is required";
         } else if (password.length < 6) {
@@ -168,50 +169,16 @@ const Login = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // الكشف التلقائي عن نوع الإدخال
-    const detectInputType = (input) => {
-        const emailRegex = /\S+@\S+\.\S+/;
-
-        if (emailRegex.test(input)) {
-            return "email";
-        } else {
-            return "phone";
-        }
-    };
-
-    const handleLoginInputChange = (value) => {
-        setLoginInput(value);
-
-        // الكشف التلقائي عن نوع الإدخال
-        if (value.trim()) {
-            const detectedType = detectInputType(value);
-            setLoginMethod(detectedType);
-        }
-
-        // مسح الأخطاء عند الكتابة
-        if (errors.loginInput || errors.general) {
-            setErrors(prev => ({
-                ...prev,
-                loginInput: "",
-                general: ""
-            }));
-        }
-    };
-
     const handleLogin = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
 
-        // إعداد بيانات التسجيل بناءً على نوع الإدخال
+        // إعداد بيانات التسجيل
         const loginData = {
+            email: email.trim(),
+            phoneNumber: phoneNumber.trim().replace(/\s/g, ''),
             password: password
         };
-
-        if (loginMethod === "email") {
-            loginData.email = loginInput.trim();
-        } else {
-            loginData.phoneNumber = loginInput.trim().replace(/\s/g, '');
-        }
 
         console.log("Attempting login with:", loginData);
         loginMutation.mutate(loginData);
@@ -245,11 +212,15 @@ const Login = () => {
         navigate("/home", { replace: true });
     };
 
-    // تبديل طريقة التسجيل يدوياً
-    const toggleLoginMethod = () => {
-        setLoginMethod(prev => prev === "email" ? "phone" : "email");
-        setLoginInput("");
-        setErrors(prev => ({ ...prev, loginInput: "" }));
+    // مسح الأخطاء عند الكتابة
+    const clearError = (field) => {
+        if (errors[field] || errors.general) {
+            setErrors(prev => ({
+                ...prev,
+                [field]: "",
+                general: ""
+            }));
+        }
     };
 
     return (
@@ -268,46 +239,44 @@ const Login = () => {
                 )}
 
                 <form onSubmit={handleLogin} className="custom-login-form">
-                    {/* Email أو Phone - حقل واحد */}
+                    {/* Email */}
                     <div className="custom-input-group">
-                        <div className="input-header">
-                            <label htmlFor="loginInput">
-                                {loginMethod === "email" ? "Email Address" : "Phone Number"}
-                            </label>
-                            <button
-                                type="button"
-                                className="switch-method-btn"
-                                onClick={toggleLoginMethod}
-                            >
-                                Use {loginMethod === "email" ? "Phone" : "Email"}
-                            </button>
-                        </div>
-
+                        <label htmlFor="email">Email Address</label>
                         <input
-                            id="loginInput"
-                            type={loginMethod === "email" ? "email" : "tel"}
-                            placeholder={
-                                loginMethod === "email"
-                                    ? "Enter your email address"
-                                    : "Enter your phone number (e.g., 0512345678)"
-                            }
-                            value={loginInput}
-                            onChange={(e) => handleLoginInputChange(e.target.value)}
-                            className={errors.loginInput ? "error" : ""}
+                            id="email"
+                            type="email"
+                            placeholder="Enter your email address"
+                            value={email}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                clearError("email");
+                            }}
+                            className={errors.email ? "error" : ""}
                             disabled={loginMutation.isPending || googleLoginMutation.isPending}
                         />
-                        {errors.loginInput && (
-                            <span className="input-error">{errors.loginInput}</span>
+                        {errors.email && (
+                            <span className="input-error">{errors.email}</span>
                         )}
+                    </div>
 
-                        {/* تلميح للكشف التلقائي */}
-                        <div className="input-hint">
-                            {loginInput && (
-                                <small>
-                                    Detected as: <strong>{loginMethod}</strong>
-                                </small>
-                            )}
-                        </div>
+                    {/* Phone Number */}
+                    <div className="custom-input-group">
+                        <label htmlFor="phoneNumber">Phone Number</label>
+                        <input
+                            id="phoneNumber"
+                            type="tel"
+                            placeholder="Enter your phone number (e.g., 0512345678)"
+                            value={phoneNumber}
+                            onChange={(e) => {
+                                setPhoneNumber(e.target.value);
+                                clearError("phoneNumber");
+                            }}
+                            className={errors.phoneNumber ? "error" : ""}
+                            disabled={loginMutation.isPending || googleLoginMutation.isPending}
+                        />
+                        {errors.phoneNumber && (
+                            <span className="input-error">{errors.phoneNumber}</span>
+                        )}
                     </div>
 
                     {/* Password */}
@@ -319,7 +288,10 @@ const Login = () => {
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Enter your password"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(e) => {
+                                    setPassword(e.target.value);
+                                    clearError("password");
+                                }}
                                 className={errors.password ? "error" : ""}
                                 disabled={loginMutation.isPending || googleLoginMutation.isPending}
                             />

@@ -5,7 +5,7 @@ import { fetchServices } from "../../redux/servicesSlice";
 import { fetchMyBookings } from "../../redux/bookingsSlice";
 import { fetchNotifications } from "../../redux/notificationsSlice";
 import { fetchMessages } from "../../redux/messagesSlice";
-import { logout } from "../../redux/authSlice"; // ✅ استيراد logout action
+import { logout } from "../../redux/authSlice";
 import ServiceCard from "../../components/ServiceCard";
 import BookingCard from "../../components/BookingCard";
 import StatsCard from "../../components/StatsCard";
@@ -27,6 +27,8 @@ export default function FreelancerDashboard() {
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(null);
+  const [loadingStatus, setLoadingStatus] = useState(true);
   const [newService, setNewService] = useState({
     title: "",
     description: "",
@@ -36,15 +38,68 @@ export default function FreelancerDashboard() {
     location: ""
   });
 
+  // ✅ دالة للتحقق من حالة الطلب
+  const checkApplicationStatus = async () => {
+    try {
+      setLoadingStatus(true);
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      
+      if (!token) {
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      const response = await fetch("http://elanis.runasp.net/api/Provider/application-status", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        // Unauthorized - redirect to login
+        dispatch(logout());
+        localStorage.clear();
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setApplicationStatus(data.data);
+      
+      // إذا كان الطلب مرفوض أو مرفوض نهائياً، نمنع الوصول للداشبورد
+      if (data.data?.statusText === "Rejected" || data.data?.statusText === "PermanentlyRejected") {
+        // يمكن إضافة redirect لصفحة الرفض إذا لزم الأمر
+        console.log("Application rejected:", data.data);
+      }
+      
+    } catch (error) {
+      console.error("Error checking application status:", error);
+      // في حالة الخطأ، نعرض الداشبورد مع تحذير
+    } finally {
+      setLoadingStatus(false);
+    }
+  };
+
   useEffect(() => {
-    // تحميل البيانات فقط إذا كان المستخدم مسجلاً الدخول
-    if (authState.isAuthenticated) {
+    // التحقق من حالة الطلب أولاً
+    checkApplicationStatus();
+  }, []);
+
+  useEffect(() => {
+    // تحميل البيانات فقط إذا كان المستخدم مسجلاً الدخول ومفعل
+    if (authState.isAuthenticated && applicationStatus?.statusText === "Approved") {
       dispatch(fetchServices());
       dispatch(fetchMyBookings());
       dispatch(fetchNotifications());
       dispatch(fetchMessages());
     }
-  }, [dispatch, authState.isAuthenticated]);
+  }, [dispatch, authState.isAuthenticated, applicationStatus]);
 
   // ✅ التحقق من مصادقة المستخدم
   useEffect(() => {
@@ -206,6 +261,89 @@ export default function FreelancerDashboard() {
     const newStatus = mockProfile.availability === "available" ? "busy" : "available";
     alert(`Availability updated to ${newStatus}`);
     // In real app, dispatch an action to update availability
+  };
+
+  // ✅ مكون لعرض حالة الانتظار
+  const PendingApproval = () => {
+    const handleRetry = () => {
+      checkApplicationStatus();
+    };
+
+    const getStatusMessage = () => {
+      if (!applicationStatus) return "Checking your application status...";
+      
+      switch(applicationStatus.statusText) {
+        case "Pending":
+          return "Your application is under review. Please wait for approval.";
+        case "Rejected":
+          return `Your application was rejected. Reason: ${applicationStatus.rejectionReason || "Not specified"}`;
+        case "PermanentlyRejected":
+          return "Your application has been permanently rejected.";
+        default:
+          return "Your application status is being processed.";
+      }
+    };
+
+    const getStatusIcon = () => {
+      if (!applicationStatus) return "⏳";
+      
+      switch(applicationStatus.statusText) {
+        case "Pending":
+          return "⏳";
+        case "Rejected":
+          return "❌";
+        case "PermanentlyRejected":
+          return "🚫";
+        default:
+          return "⏳";
+      }
+    };
+
+    return (
+      <div className="pending-approval-container">
+        <div className="pending-approval-content">
+          <div className="status-icon">{getStatusIcon()}</div>
+          <h2>Application Status</h2>
+          <p className="status-message">{getStatusMessage()}</p>
+          
+          {applicationStatus && (
+            <div className="application-details">
+              <div className="detail-item">
+                <strong>Application ID:</strong> 
+                <span>{applicationStatus.applicationId}</span>
+              </div>
+              <div className="detail-item">
+                <strong>Submitted:</strong> 
+                <span>{new Date(applicationStatus.createdAt).toLocaleDateString()}</span>
+              </div>
+              {applicationStatus.reviewedAt && (
+                <div className="detail-item">
+                  <strong>Last Review:</strong> 
+                  <span>{new Date(applicationStatus.reviewedAt).toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <div className="action-buttons">
+            <button 
+              className="retry-button"
+              onClick={handleRetry}
+              disabled={loadingStatus}
+            >
+              {loadingStatus ? "Checking..." : "Refresh Status"}
+            </button>
+            <button 
+              className="logout-button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? "Logging out..." : "Logout"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // مكون القائمة الجانبية
@@ -558,8 +696,8 @@ export default function FreelancerDashboard() {
           </div>
         );
       
-      // ... باقي الأقسام (bookings, statistics, messages, settings) تبقى كما هي مع إضافة disabled={isLoggingOut} للأزرار
-
+      // ... باقي الأقسام (bookings, statistics, messages, settings) تبقى كما هي
+      
       default:
         return (
           <div className="dashboard-section">
@@ -609,6 +747,22 @@ export default function FreelancerDashboard() {
     );
   };
 
+  // ✅ العرض الشرطي بناءً على حالة الموافقة
+  if (loadingStatus) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Checking application status...</p>
+      </div>
+    );
+  }
+
+  // إذا لم يكن الطلب معتمداً، نعرض شاشة الانتظار
+  if (applicationStatus?.statusText !== "Approved") {
+    return <PendingApproval />;
+  }
+
+  // إذا كان الطلب معتمداً، نعرض الداشبورد كاملاً
   return (
     <div className="dashboard-container">
       <Sidebar />

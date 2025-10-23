@@ -5,11 +5,10 @@ import { fetchServiceProviders } from "../../redux/providersSlice";
 import { fetchServices } from "../../redux/servicesSlice";
 import { fetchNotifications } from "../../redux/notificationsSlice";
 import { fetchMessages } from "../../redux/messagesSlice";
-import { logout } from "../../redux/authSlice"; // ✅ استيراد logout action
+import { logout } from "../../redux/authSlice";
 import ServiceCard from "../../components/ServiceCard";
 import StatsCard from "../../components/StatsCard";
 import "./AdminDashboard.css";
-import { AlignCenter } from "lucide-react";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -27,18 +26,19 @@ export default function AdminDashboard() {
   const [showVerificationForm, setShowVerificationForm] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [verificationData, setVerificationData] = useState({
-    providerId: "",
-    status: "approved",
-    notes: ""
-  });
-
-  // endpoint pages of categories -> endpoint 2
-  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // بيانات API
   const [stats, setStats] = useState(null);
-  const [categories, setCategories] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+    totalCount: 0,
+    totalPages: 0
+  });
 
   // ✅ التحقق من مصادقة المستخدم
   useEffect(() => {
@@ -48,83 +48,304 @@ export default function AdminDashboard() {
   }, [authState.isAuthenticated, navigate]);
 
   // جلب إحصائيات Dashboard
-  useEffect(() => {
-    const fetchDashboardStats = async () => {
-      try {
-        const token = localStorage.getItem("authToken") || localStorage.getItem("token");
-        const response = await fetch("http://elanis.runasp.net/api/Admin/dashboard-stats", {
-          method: "GET",
-          headers: {
-            "accept": "application/json",
-            "Authorization": `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.succeeded) {
-            setStats(data.data);
-            console.log("Dashboard stats:", data.data);
-          } else {
-            console.error("Error fetching stats:", data.message);
-          }
-        } else {
-          console.error("HTTP error:", response.status);
+  const fetchDashboardStats = async () => {
+    try {
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      const response = await fetch("http://elanis.runasp.net/api/Admin/dashboard-stats", {
+        method: "GET",
+        headers: {
+          "accept": "application/json",
+          "Authorization": `Bearer ${token}`
         }
-      } catch (err) {
-        console.error("Fetch error:", err);
-      }
-    };
+      });
 
-    if (authState.isAuthenticated) {
-      fetchDashboardStats();
+      if (response.ok) {
+        const data = await response.json();
+        if (data.succeeded) {
+          setStats(data.data);
+        } else {
+          console.error("Error fetching stats:", data.message);
+        }
+      } else {
+        console.error("HTTP error:", response.status);
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
     }
-  }, [authState.isAuthenticated]);
+  };
 
   // جلب التصنيفات
-  useEffect(() => {
-    const fetchServiceTypes = async () => {
-      try {
-        const token = localStorage.getItem("authToken") || localStorage.getItem("token");
-        const response = await fetch("http://elanis.runasp.net/api/ServiceType", {
+  const fetchServiceTypes = async () => {
+    try {
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      const response = await fetch("http://elanis.runasp.net/api/ServiceType", {
+        method: "GET",
+        headers: {
+          "accept": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.succeeded) {
+          setCategories(data.data);
+        } else {
+          console.error("Error fetching service types:", data.message);
+        }
+      } else {
+        console.error("HTTP error:", response.status);
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  };
+
+  // جلب طلبات مزودي الخدمة
+  const fetchServiceProviderApplications = async (page = 1, pageSize = 10) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      const response = await fetch(
+        `http://elanis.runasp.net/api/Admin/service-provider-applications?page=${page}&pageSize=${pageSize}`,
+        {
           method: "GET",
           headers: {
             "accept": "application/json",
             "Authorization": `Bearer ${token}`
           }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.succeeded) {
-            setCategories(data.data); // استخدام نفس state لو عايز تعرضهم
-            console.log("Service Types:", data.data);
-          } else {
-            console.error("Error fetching service types:", data.message);
-          }
-        } else {
-          console.error("HTTP error:", response.status);
         }
-      } catch (err) {
-        console.error("Fetch error:", err);
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.succeeded) {
+          setApplications(data.data.items);
+          setPagination({
+            page: data.data.page,
+            pageSize: data.data.pageSize,
+            totalCount: data.data.totalCount,
+            totalPages: data.data.totalPages,
+            hasNextPage: data.data.hasNextPage,
+            hasPreviousPage: data.data.hasPreviousPage
+          });
+        } else {
+          console.error("Error fetching applications:", data.message);
+        }
+      } else {
+        console.error("HTTP error:", response.status);
       }
-    };
-
-    if (authState.isAuthenticated) {
-      fetchServiceTypes();
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
     }
-  }, [authState.isAuthenticated]);
+  };
 
+  // جلب تفاصيل طلب محدد
+  const fetchApplicationDetails = async (id) => {
+    try {
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      const response = await fetch(
+        `http://elanis.runasp.net/api/Admin/service-provider-applications/${id}`,
+        {
+          method: "GET",
+          headers: {
+            "accept": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        }
+      );
 
+      if (response.ok) {
+        const data = await response.json();
+        if (data.succeeded) {
+          setSelectedApplication(data.data);
+          return data.data;
+        } else {
+          console.error("Error fetching application details:", data.message);
+        }
+      } else {
+        console.error("HTTP error:", response.status);
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+    return null;
+  };
+
+  // الموافقة على طلب مزود خدمة
+  const approveApplication = async (id) => {
+    try {
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      const response = await fetch(
+        `http://elanis.runasp.net/api/Admin/service-provider-applications/${id}/approve`,
+        {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.succeeded) {
+          alert("Application approved successfully!");
+          fetchServiceProviderApplications(pagination.page, pagination.pageSize);
+          fetchDashboardStats();
+        } else {
+          alert(`Error: ${data.message}`);
+        }
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message}`);
+      }
+    } catch (err) {
+      console.error("Approve error:", err);
+      alert("Error approving application");
+    }
+  };
+
+  // رفض طلب مزود خدمة
+  const rejectApplication = async (id, rejectionReason) => {
+    try {
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      const response = await fetch(
+        `http://elanis.runasp.net/api/Admin/service-provider-applications/${id}/reject`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "accept": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ rejectionReason })
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.succeeded) {
+          alert("Application rejected successfully!");
+          fetchServiceProviderApplications(pagination.page, pagination.pageSize);
+          fetchDashboardStats();
+        } else {
+          alert(`Error: ${data.message}`);
+        }
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message}`);
+      }
+    } catch (err) {
+      console.error("Reject error:", err);
+      alert("Error rejecting application");
+    }
+  };
+
+  // ✅ تعليق مزود خدمة - معدل
+  const suspendProvider = async (applicationId, reason) => {
+    try {
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      
+      // البحث عن الـ application للحصول على userId
+      const application = applications.find(app => app.id === applicationId);
+      if (!application) {
+        alert("Application not found");
+        return;
+      }
+
+      // استخدام userId كـ provider ID
+      const response = await fetch(
+        `http://elanis.runasp.net/api/Admin/service-providers/${application.userId}/suspend`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "accept": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ reason })
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.succeeded) {
+          alert("Provider suspended successfully!");
+          fetchServiceProviderApplications(pagination.page, pagination.pageSize);
+        } else {
+          alert(`Error: ${data.message}`);
+        }
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message}`);
+      }
+    } catch (err) {
+      console.error("Suspend error:", err);
+      alert("Error suspending provider");
+    }
+  };
+
+  // ✅ تفعيل مزود خدمة - معدل
+  const activateProvider = async (applicationId) => {
+    try {
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      
+      // البحث عن الـ application للحصول على userId
+      const application = applications.find(app => app.id === applicationId);
+      if (!application) {
+        alert("Application not found");
+        return;
+      }
+
+      // استخدام userId كـ provider ID
+      const response = await fetch(
+        `http://elanis.runasp.net/api/Admin/service-providers/${application.userId}/activate`,
+        {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.succeeded) {
+          alert("Provider activated successfully!");
+          fetchServiceProviderApplications(pagination.page, pagination.pageSize);
+        } else {
+          alert(`Error: ${data.message}`);
+        }
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message}`);
+      }
+    } catch (err) {
+      console.error("Activate error:", err);
+      alert("Error activating provider");
+    }
+  };
+
+  // تحميل البيانات عند تغيير القسم النشط
   useEffect(() => {
-    // تحميل البيانات فقط إذا كان المستخدم مسجلاً الدخول
     if (authState.isAuthenticated) {
+      fetchDashboardStats();
+      fetchServiceTypes();
+
+      if (activeSection === "providers") {
+        fetchServiceProviderApplications();
+      }
+
       dispatch(fetchServiceProviders());
       dispatch(fetchServices());
       dispatch(fetchNotifications());
       dispatch(fetchMessages());
     }
-  }, [dispatch, authState.isAuthenticated]);
+  }, [dispatch, authState.isAuthenticated, activeSection]);
 
   // معالجة آمنة للبيانات
   const providers = Array.isArray(providersState?.providers) ? providersState.providers : [];
@@ -150,9 +371,7 @@ export default function AdminDashboard() {
 
   // حساب الإحصائيات بشكل آمن
   const totalProviders = providers.length;
-  const pendingVerification = providers.filter(provider =>
-    provider?.verificationStatus === "pending" || provider?.status === "pending"
-  ).length;
+  const pendingApplications = applications.filter(app => app.status === 1).length;
   const verifiedProviders = providers.filter(provider =>
     provider?.verificationStatus === "verified" || provider?.status === "verified"
   ).length;
@@ -163,14 +382,13 @@ export default function AdminDashboard() {
 
   // ✅ دالة تسجيل الخروج المحسنة
   const handleLogout = async () => {
-    if (isLoggingOut) return; // منع النقر المتعدد
+    if (isLoggingOut) return;
 
     setIsLoggingOut(true);
 
     try {
       const token = localStorage.getItem("authToken") || localStorage.getItem("token");
 
-      // محاولة تسجيل الخروج من السيرفر إذا كان هناك توكن
       if (token) {
         try {
           const response = await fetch("http://elanis.runasp.net/api/Account/logout", {
@@ -183,18 +401,14 @@ export default function AdminDashboard() {
 
           if (response.ok) {
             console.log("✅ Logged out successfully from server");
-          } else {
-            console.warn("⚠️ Server logout failed, but continuing with local logout");
           }
         } catch (serverError) {
-          console.warn("⚠️ Server logout error, but continuing with local logout:", serverError);
+          console.warn("⚠️ Server logout error:", serverError);
         }
       }
 
-      // ✅ 1. إرسال action تسجيل الخروج إلى Redux
       dispatch(logout());
 
-      // ✅ 2. تنظيف التخزين المحلي بشكل كامل
       const storageItems = [
         "authToken", "token", "userId", "userData", "refreshToken",
         "providers", "services", "notifications", "messages", "stats", "categories"
@@ -205,23 +419,16 @@ export default function AdminDashboard() {
         sessionStorage.removeItem(item);
       });
 
-      // ✅ 3. مسح كامل للتخزين المؤقت
       localStorage.clear();
       sessionStorage.clear();
 
-      // ✅ 4. إعادة تعيين حالة التطبيق
       setTimeout(() => {
-        // ✅ 5. إعادة التوجيه للصفحة الرئيسية
         navigate("/", { replace: true });
-
-        // ✅ 6. إعادة تحميل الصفحة لضمان تنظيف كامل للذاكرة
         window.location.reload();
       }, 500);
 
     } catch (error) {
       console.error("❌ Logout error:", error);
-
-      // حتى في حالة الخطأ، نظف البيانات المحلية
       dispatch(logout());
       localStorage.clear();
       sessionStorage.clear();
@@ -249,9 +456,7 @@ export default function AdminDashboard() {
   const recentActivities = [
     { id: 1, type: "provider_register", message: "New service provider registered", time: "2 hours ago", user: "Ahmed Mohamed", priority: "high" },
     { id: 2, type: "booking", message: "New booking created", time: "4 hours ago", user: "Sarah Johnson", priority: "medium" },
-    { id: 3, type: "verification", message: "Provider verification completed", time: "1 day ago", user: "Fatima Hassan", priority: "low" },
-    { id: 4, type: "support", message: "Support ticket resolved", time: "2 days ago", user: "Support Team", priority: "medium" },
-    { id: 5, type: "payment", message: "Payment issue reported", time: "3 days ago", user: "Mohamed Ali", priority: "high" }
+    { id: 3, type: "verification", message: "Provider verification completed", time: "1 day ago", user: "Fatima Hassan", priority: "low" }
   ];
 
   // System alerts
@@ -261,15 +466,23 @@ export default function AdminDashboard() {
     { id: 3, type: "success", message: "New system update available", time: "1 day ago" }
   ];
 
-  const handleVerification = (providerId, status) => {
-    // Mock verification process
-    alert(`Provider ${providerId} ${status} successfully!`);
-    setShowVerificationForm(false);
-    setVerificationData({
-      providerId: "",
-      status: "approved",
-      notes: ""
-    });
+  // وظائف المساعدة
+  const getStatusText = (status) => {
+    switch (status) {
+      case 1: return "Pending";
+      case 2: return "Rejected";
+      case 3: return "Approved";
+      default: return "Unknown";
+    }
+  };
+
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 1: return "status-pending";
+      case 2: return "status-rejected";
+      case 3: return "status-approved";
+      default: return "status-unknown";
+    }
   };
 
   // مكون القائمة الجانبية المدمج
@@ -328,8 +541,8 @@ export default function AdminDashboard() {
               {item.id === "messages" && unreadMessagesCount > 0 && (
                 <span className="message-badge">{unreadMessagesCount}</span>
               )}
-              {item.id === "providers" && pendingVerification > 0 && (
-                <span className="alert-badge">{pendingVerification}</span>
+              {item.id === "providers" && pendingApplications > 0 && (
+                <span className="alert-badge">{pendingApplications}</span>
               )}
             </button>
           ))}
@@ -346,7 +559,7 @@ export default function AdminDashboard() {
               <span className="stat-label">Services</span>
             </div>
             <div className="system-stat">
-              <span className="stat-value">{pendingVerification}</span>
+              <span className="stat-value">{pendingApplications}</span>
               <span className="stat-label">Pending</span>
             </div>
           </div>
@@ -399,12 +612,12 @@ export default function AdminDashboard() {
               </div>
               <div className="welcome-stats">
                 <div className="stat-badge primary">
-                  <span className="stat-number">{totalProviders}</span>
+                  <span className="stat-number">{stats?.totalServiceProviders || 0}</span>
                   <span className="stat-label">Total Providers</span>
                 </div>
                 <div className="stat-badge warning">
-                  <span className="stat-number">{pendingVerification}</span>
-                  <span className="stat-label">Pending Verification</span>
+                  <span className="stat-number">{stats?.pendingApplications || 0}</span>
+                  <span className="stat-label">Pending Applications</span>
                 </div>
                 <div className="stat-badge success">
                   <span className="stat-number">${stats?.totalEarnings || 0}</span>
@@ -419,7 +632,7 @@ export default function AdminDashboard() {
               <StatsCard title="Pending Applications" value={stats?.pendingApplications} icon="⏳" trend="down" />
               <StatsCard title="Total Service Requests" value={stats?.totalServiceRequests} icon="📅" trend="up" />
               <StatsCard title="Completed Service Requests" value={stats?.completedServiceRequests} icon="✅" trend="up" />
-              <StatsCard title="Total Earnings" value={stats?.totalEarnings} icon="💰" trend="up" />
+              <StatsCard title="Total Earnings" value={`$${stats?.totalEarnings || 0}`} icon="💰" trend="up" />
               <StatsCard title="Total Reviews" value={stats?.totalReviews} icon="⭐" trend="up" />
               <StatsCard title="Average Rating" value={stats?.averageRating} icon="📊" trend="up" />
             </div>
@@ -437,8 +650,6 @@ export default function AdminDashboard() {
                         {activity.type === 'provider_register' && '👤'}
                         {activity.type === 'booking' && '📅'}
                         {activity.type === 'verification' && '✅'}
-                        {activity.type === 'support' && '💬'}
-                        {activity.type === 'payment' && '💰'}
                       </div>
                       <div className="activity-content">
                         <p className="activity-message">{activity.message}</p>
@@ -481,7 +692,7 @@ export default function AdminDashboard() {
             <div className="dashboard-section">
               <div className="section-header">
                 <h3 className="section-title">Service Types</h3>
-                <span className="total-count">{applications?.length} total services</span>
+                <span className="total-count">{categories?.length || 0} total categories</span>
               </div>
               <div className="categories-grid">
                 {/* Add New Category */}
@@ -505,12 +716,11 @@ export default function AdminDashboard() {
                       onClick={() => {
                         if (!isLoggingOut) {
                           setSelectedCategory(category.id);
-                          // navigate للصفحة الجديدة مع إرسال الـ id
                           navigate(`/ServiceType/${category.id}`);
                         }
-                      }} // هنا قفلت الـ onClick صح
+                      }}
                     >
-                      <div className="category-icon">{category.iconUrl ?? "🏠"}</div>
+                      <div className="category-icon">{category.iconUrl || "🏠"}</div>
                       <div className="category-info">
                         <span className="category-name">{category.name || "Unnamed Category"}</span>
                         <span className="category-count">{category.categoriesCount || 0} services</span>
@@ -521,10 +731,8 @@ export default function AdminDashboard() {
                 ) : (
                   <p className="no-data">No service categories available.</p>
                 )}
-
               </div>
-
-            </div >
+            </div>
           </>
         );
 
@@ -535,140 +743,283 @@ export default function AdminDashboard() {
               <div className="section-title-group">
                 <h3 className="section-title">Service Providers Management</h3>
                 <div className="provider-stats">
-                  <span className="stat-total">Total: {totalProviders}</span>
-                  <span className="stat-pending">Pending: {pendingVerification}</span>
-                  <span className="stat-verified">Verified: {verifiedProviders}</span>
+                  <div className="stat-item">
+                    <span className="stat-number">{pagination.totalCount}</span>
+                    <span className="stat-label">Total</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-number warning">{pendingApplications}</span>
+                    <span className="stat-label">Pending</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-number success">{applications.filter(app => app.status === 3).length}</span>
+                    <span className="stat-label">Approved</span>
+                  </div>
                 </div>
               </div>
               <div className="section-actions">
                 <button
-                  className="action-button primary"
-                  onClick={() => setShowVerificationForm(!showVerificationForm)}
-                  disabled={isLoggingOut}
+                  className="action-btn refresh-btn"
+                  onClick={() => fetchServiceProviderApplications()}
+                  disabled={loading || isLoggingOut}
                 >
-                  {showVerificationForm ? "Cancel" : "Verify Provider"}
+                  <span className="btn-icon">🔄</span>
+                  {loading ? "Refreshing..." : "Refresh"}
                 </button>
-                <button className="action-button secondary" disabled={isLoggingOut}>
+                <button className="action-btn export-btn" disabled={isLoggingOut}>
+                  <span className="btn-icon">📊</span>
                   Export Data
                 </button>
               </div>
             </div>
 
-            {showVerificationForm && (
-              <div className="verification-form">
-                <h4>Provider Verification</h4>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Provider ID</label>
-                    <input
-                      type="text"
-                      value={verificationData.providerId}
-                      onChange={(e) => setVerificationData({ ...verificationData, providerId: e.target.value })}
-                      placeholder="Enter provider ID"
-                      disabled={isLoggingOut}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Status</label>
-                    <select
-                      value={verificationData.status}
-                      onChange={(e) => setVerificationData({ ...verificationData, status: e.target.value })}
-                      disabled={isLoggingOut}
-                    >
-                      <option value="approved">Approve</option>
-                      <option value="rejected">Reject</option>
-                      <option value="pending">Pending</option>
-                    </select>
-                  </div>
-                  <div className="form-group full-width">
-                    <label>Notes</label>
-                    <textarea
-                      value={verificationData.notes}
-                      onChange={(e) => setVerificationData({ ...verificationData, notes: e.target.value })}
-                      placeholder="Add verification notes..."
-                      rows="3"
-                      disabled={isLoggingOut}
-                    />
-                  </div>
-                </div>
-                <div className="form-actions">
-                  <button
-                    className="submit-button"
-                    onClick={() => handleVerification(verificationData.providerId, verificationData.status)}
-                    disabled={isLoggingOut}
-                  >
-                    Submit Verification
-                  </button>
-                </div>
+            {/* Pagination Controls */}
+            <div className="pagination-controls">
+              <button
+                onClick={() => fetchServiceProviderApplications(pagination.page - 1, pagination.pageSize)}
+                disabled={!pagination.hasPreviousPage || loading || isLoggingOut}
+                className="pagination-btn prev-btn"
+              >
+                <span className="pagination-icon">←</span>
+                Previous
+              </button>
+              <div className="pagination-info">
+                <span className="page-current">{pagination.page}</span>
+                <span className="page-separator">of</span>
+                <span className="page-total">{pagination.totalPages}</span>
               </div>
-            )}
+              <button
+                onClick={() => fetchServiceProviderApplications(pagination.page + 1, pagination.pageSize)}
+                disabled={!pagination.hasNextPage || loading || isLoggingOut}
+                className="pagination-btn next-btn"
+              >
+                Next
+                <span className="pagination-icon">→</span>
+              </button>
+            </div>
 
-            {providers.length > 0 ? (
-              <div className="providers-table">
-                <div className="table-header">
-                  <span>Provider Information</span>
-                  <span>Services</span>
-                  <span>Status</span>
-                  <span>Rating</span>
-                  <span>Actions</span>
-                </div>
-                <div className="table-body">
-                  {providers.map(provider => (
-                    <div key={provider.id || provider._id} className="table-row">
-                      <div className="provider-info">
-                        <img
-                          src={provider.avatar || provider.profileImage || "/default-avatar.png"}
-                          alt={provider.name}
-                          onError={(e) => {
-                            e.target.src = "/default-avatar.png";
-                          }}
-                        />
-                        <div className="provider-details">
-                          <span className="provider-name">{provider.name || "Unknown Provider"}</span>
-                          <span className="provider-email">{provider.email || "No email"}</span>
-                          <span className="provider-join">Joined: {provider.joinDate || "Unknown"}</span>
+            {loading ? (
+              <div className="loading-state">
+                <div className="loading-spinner"></div>
+                <p className="loading-text">Loading applications...</p>
+              </div>
+            ) : applications.length > 0 ? (
+              <div className="applications-container">
+                <div className="applications-table">
+                  <div className="table-header">
+                    <div className="header-column provider-info">Provider Information</div>
+                    <div className="header-column contact">Contact</div>
+                    <div className="header-column rate">Hourly Rate</div>
+                    <div className="header-column status">Status</div>
+                    <div className="header-column date">Applied Date</div>
+                    <div className="header-column actions">Actions</div>
+                  </div>
+                  <div className="table-body">
+                    {applications.map((application, index) => (
+                      <div key={application.id} className={`table-row ${index % 2 === 0 ? 'even' : 'odd'}`}>
+                        <div className="table-cell provider-info">
+                          <div className="provider-avatar">
+                            {application.firstName?.charAt(0)}{application.lastName?.charAt(0)}
+                          </div>
+                          <div className="provider-details">
+                            <h4 className="provider-name">
+                              {application.firstName} {application.lastName}
+                            </h4>
+                            <p className="provider-email">{application.userEmail}</p>
+                            <p className="provider-bio">{application.bio?.substring(0, 60)}...</p>
+                          </div>
+                        </div>
+                        <div className="table-cell contact">
+                          <div className="contact-info">
+                            <span className="contact-phone">📞 {application.phoneNumber}</span>
+                            <span className="contact-email">✉️ {application.userEmail}</span>
+                          </div>
+                        </div>
+                        <div className="table-cell rate">
+                          <div className="rate-badge">
+                            <span className="rate-amount">${application.hourlyRate}</span>
+                            <span className="rate-period">/hour</span>
+                          </div>
+                        </div>
+                        <div className="table-cell status">
+                          <span className={`status-badge ${getStatusBadgeClass(application.status)}`}>
+                            <span className="status-dot"></span>
+                            {getStatusText(application.status)}
+                          </span>
+                        </div>
+                        <div className="table-cell date">
+                          <div className="date-info">
+                            <span className="date-day">{new Date(application.createdAt).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                            <span className="date-full">{new Date(application.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <div className="table-cell actions">
+                          <div className="action-buttons">
+                            <button
+                              className="action-btn view-btn"
+                              onClick={() => fetchApplicationDetails(application.id)}
+                              disabled={isLoggingOut}
+                              title="View Details"
+                            >
+                              <span className="btn-icon">👁️</span>
+                              View
+                            </button>
+                            {application.status === 1 && (
+                              <div className="action-group">
+                                <button
+                                  className="action-btn approve-btn"
+                                  onClick={() => approveApplication(application.id)}
+                                  disabled={isLoggingOut}
+                                  title="Approve Application"
+                                >
+                                  <span className="btn-icon">✅</span>
+                                  Approve
+                                </button>
+                                <button
+                                  className="action-btn reject-btn"
+                                  onClick={() => {
+                                    const reason = prompt("Enter rejection reason:");
+                                    if (reason) rejectApplication(application.id, reason);
+                                  }}
+                                  disabled={isLoggingOut}
+                                  title="Reject Application"
+                                >
+                                  <span className="btn-icon">❌</span>
+                                  Reject
+                                </button>
+                              </div>
+                            )}
+                            {application.status === 3 && (
+                              <div className="action-group">
+                                <button
+                                  className="action-btn suspend-btn"
+                                  onClick={() => {
+                                    const reason = prompt("Enter suspension reason:");
+                                    if (reason) suspendProvider(application.id, reason);
+                                  }}
+                                  disabled={isLoggingOut}
+                                  title="Suspend Provider"
+                                >
+                                  <span className="btn-icon">⏸️</span>
+                                  Suspend
+                                </button>
+                                <button
+                                  className="action-btn activate-btn"
+                                  onClick={() => activateProvider(application.id)}
+                                  disabled={isLoggingOut}
+                                  title="Activate Provider"
+                                >
+                                  <span className="btn-icon">▶️</span>
+                                  Activate
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="provider-services">
-                        {provider.services?.slice(0, 2).map(service => (
-                          <span key={service} className="service-tag">{service}</span>
-                        ))}
-                        {provider.services?.length > 2 && (
-                          <span className="more-tag">+{provider.services.length - 2} more</span>
-                        )}
-                      </div>
-                      <div className="provider-status">
-                        <span className={`status-badge status-${provider.verificationStatus || provider.status || "unknown"}`}>
-                          {provider.verificationStatus || provider.status || "unknown"}
-                        </span>
-                      </div>
-                      <div className="provider-rating">
-                        ⭐ {provider.rating || "N/A"}
-                        <span className="rating-count">({provider.reviews || 0})</span>
-                      </div>
-                      <div className="provider-actions">
-                        <button className="action-btn view" disabled={isLoggingOut}>View</button>
-                        <button className="action-btn edit" disabled={isLoggingOut}>Edit</button>
-                        <button className="action-btn verify" disabled={isLoggingOut}>Verify</button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="empty-state">
                 <div className="empty-icon">👥</div>
-                <h3>No Service Providers</h3>
-                <p className="empty-text">No service providers registered yet</p>
+                <h3 className="empty-title">No Applications Found</h3>
+                <p className="empty-text">No service provider applications at the moment</p>
                 <button className="cta-button" disabled={isLoggingOut}>
+                  <span className="btn-icon">➕</span>
                   Invite Providers
                 </button>
               </div>
             )}
+
+            {/* Application Details Modal */}
+            {selectedApplication && (
+              <div className="modal-overlay">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <div className="modal-title">
+                      <h3>Application Details</h3>
+                      <p>Complete information about the provider application</p>
+                    </div>
+                    <button
+                      className="modal-close"
+                      onClick={() => setSelectedApplication(null)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="detail-grid">
+                      <div className="detail-section">
+                        <h4 className="section-title">Personal Information</h4>
+                        <div className="detail-row">
+                          <div className="detail-item">
+                            <label>Full Name</label>
+                            <span>{selectedApplication.firstName} {selectedApplication.lastName}</span>
+                          </div>
+                          <div className="detail-item">
+                            <label>Email Address</label>
+                            <span>{selectedApplication.userEmail}</span>
+                          </div>
+                        </div>
+                        <div className="detail-row">
+                          <div className="detail-item">
+                            <label>Phone Number</label>
+                            <span>{selectedApplication.phoneNumber}</span>
+                          </div>
+                          <div className="detail-item">
+                            <label>Hourly Rate</label>
+                            <span className="rate-highlight">${selectedApplication.hourlyRate}/hour</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="detail-section">
+                        <h4 className="section-title">Professional Details</h4>
+                        <div className="detail-item full-width">
+                          <label>Bio</label>
+                          <p className="detail-text">{selectedApplication.bio}</p>
+                        </div>
+                        <div className="detail-item full-width">
+                          <label>Experience</label>
+                          <p className="detail-text">{selectedApplication.experience}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button
+                      className="modal-btn secondary"
+                      onClick={() => setSelectedApplication(null)}
+                    >
+                      Close
+                    </button>
+                    {selectedApplication.status === 1 && (
+                      <div className="modal-actions">
+                        <button
+                          className="modal-btn success"
+                          onClick={() => approveApplication(selectedApplication.id)}
+                        >
+                          Approve Application
+                        </button>
+                        <button
+                          className="modal-btn danger"
+                          onClick={() => {
+                            const reason = prompt("Enter rejection reason:");
+                            if (reason) rejectApplication(selectedApplication.id, reason);
+                          }}
+                        >
+                          Reject Application
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
-
-      // ... باقي الأقسام (services, analytics, settings) تبقى كما هي مع إضافة disabled={isLoggingOut}
 
       default:
         return (
